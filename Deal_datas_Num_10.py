@@ -55,9 +55,9 @@ ba_y = np.array(list_y)
 file_name = (MY_PATH + FILE_HEADER + '_ba_Xy')
 with open(file_name, 'wb') as myfile:
     mylist = [ba_X, ba_y]
-    pickle.dump(mylist, file)
+    pickle.dump(mylist, myfile)
 
-file_name = (MY_PATH + FILE_HEADER + 'ba_FULL_Xy')
+file_name = (MY_PATH + FILE_HEADER + '_ba_FULL_Xy')
 with open(file_name, 'wb') as myfile:
     mylist = [ba_full_X, ba_full_y]
-    pickle.dump(mylist, file)
+    pickle.dump(mylist, myfile)
