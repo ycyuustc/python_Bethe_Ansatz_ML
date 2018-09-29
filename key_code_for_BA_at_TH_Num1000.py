@@ -10,14 +10,15 @@ import sys
 
 
 # global variable path
-MY_PATH = '/vol7/home/ycyu/python/datas/'
-FILE_HEADER = 'Num_10'
+MY_PATH = '/vol7/home/ycyu/python/datas_2/'
+FILE_HEADER = 'Num_1000'
 NODE_NAME = 'n' + sys.argv[1]
 JOB_NAME = sys.argv[0]
+NUM_POOL = 1
 
 Num0 = 1000
-Num_thread = 20
-Num_iteration = 2
+Num_thread = 1
+Num_iteration = 1
 
 
 # =============================  functions  =====================================
@@ -100,7 +101,6 @@ def my_ba_thread(inpdata):
 
     # ==============    Main Loop    =======================================
     for iIteration in range(num_iteration):
-
         for iInd in range(num):
 
             v_onehot1 = v_onehot.copy()
@@ -133,7 +133,7 @@ def my_ba_thread(inpdata):
 
     #   ==========   restore the result  =====================
     # thread_data_name_full = MY_PATH + FILE_HEADER + '_FULL_' + str(index)  # pickle it into the root
-    thread_data_name = MY_PATH + FILE_HEADER + '_' + NODE_NAME +  '_th_' + str(index)
+    thread_data_name = MY_PATH + FILE_HEADER + '_' + NODE_NAME + '_th_' + str(index)
     with open(thread_data_name, 'wb') as File:
         pickle.dump(instore, File)
 
@@ -149,13 +149,14 @@ def multicore(num0, num_thread, num_iteration, coupling, beta, mu):
     # ==========  SET UP the thread  ==============================
     listparameter = (num0, coupling, beta, mu, num_iteration)
     inpdata = [listparameter + (i2,) for i2 in range(num_thread)]
-
     # the running poll
-    pool = mp.Pool()
+    pool = mp.Pool(NUM_POOL)
     pool.map(my_ba_thread, inpdata)
 
-    # return result ?  need return value
+    pool.close()
+    pool.join()
 
+    # return result ?  need return value
 
 # =============== MAIN PROGRAM =============================================
 if __name__ == '__main__':
@@ -187,28 +188,10 @@ if __name__ == '__main__':
               mu=((Num0 * 0.50) * np.pi) ** 2
               )
     st1 = time.time()
-    print('Lapse time = ', st1 - st0)
+    print('Total main Lapse time = ', st1 - st0)
     # =============   Main calculation finished ===============================
 
     # =============  Deal with the data  in /data/=============================
-
-    Num = Num0 + 1
-    v_Base0 = 1.0 / 2 * np.arange(-Num0, Num0 + 1.0, step=2)
-
-    m_distribution = np.zeros([Num_thread, Num])
-
-    for index in range(Num_thread):
-        myFileName = MY_PATH + FILE_HEADER + '_' + NODE_NAME + '_th_' + str(index)
-        with open(myFileName, 'rb') as file_read:
-            mylist = pickle.load(file_read)
-            myarray = np.array(mylist)
-        result_index = myarray[0]
-        result_index = np.mean(result_index, axis=0)
-        v_distribution = np.array(result_index)
-        m_distribution[index, :] = v_distribution
-
-    v_dist = np.mean(m_distribution, axis=0)
-
 
 # make up the training set.
 # ba_X presents the input
@@ -217,6 +200,8 @@ if __name__ == '__main__':
     print('job:' + JOB_NAME + ' node:' + NODE_NAME + ' Main program finished')
 
     sttime_1 = time.time()
+
+    Num = Num0 + 1
     list_X = list()
     list_y = list()
     for index in range(Num_thread):
@@ -242,5 +227,4 @@ if __name__ == '__main__':
 
     sttime_2 = time.time()
     print('elaspe time for storing : ' + str(sttime_2 - sttime_1))
-
 

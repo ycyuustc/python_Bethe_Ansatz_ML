@@ -15,9 +15,9 @@ FILE_HEADER = 'Num_10'
 NODE_NAME = 'n' + sys.argv[1]
 JOB_NAME = sys.argv[0]
 
-Num0 = 1000
+Num0 = 10
 Num_thread = 20
-Num_iteration = 2
+Num_iteration = 2000
 
 
 # =============================  functions  =====================================
@@ -182,9 +182,9 @@ if __name__ == '__main__':
     multicore(num0=Num0,
               num_thread=Num_thread,
               num_iteration=Num_iteration,
-              coupling=0.0002,
-              beta=0.000005,
-              mu=((Num0 * 0.50) * np.pi) ** 2
+              coupling=0.05,
+              beta=0.05,
+              mu=((Num0 * 0.30) * np.pi) ** 2
               )
     st1 = time.time()
     print('Lapse time = ', st1 - st0)

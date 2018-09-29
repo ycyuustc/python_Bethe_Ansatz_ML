@@ -10,14 +10,15 @@ import sys
 
 
 # global variable path
-MY_PATH = '/vol7/home/ycyu/python/datas/'
-FILE_HEADER = 'Num_10'
+MY_PATH = '/vol7/home/ycyu/python/datas_2/'
+FILE_HEADER = 'Num_1000'
 NODE_NAME = 'n' + sys.argv[1]
 JOB_NAME = sys.argv[0]
+NUM_POOL = 4
 
-Num0 = 1000
-Num_thread = 20
-Num_iteration = 2
+Num0 = 300
+Num_thread = 4
+Num_iteration = 1
 
 
 # =============================  functions  =====================================
@@ -100,9 +101,8 @@ def my_ba_thread(inpdata):
 
     # ==============    Main Loop    =======================================
     for iIteration in range(num_iteration):
-
         for iInd in range(num):
-
+            # t1 = time.time()
             v_onehot1 = v_onehot.copy()
             v_onehot1[iInd] = 0.0
             v_onehot2 = v_onehot.copy()
@@ -126,6 +126,11 @@ def my_ba_thread(inpdata):
                 v_onehot = v_onehot2
                 v_root = v_root2
 
+            # t2 = time.time()
+            # print('No.' + str(index) + ' thread' + ' iteration ' + str(iIteration)
+            #       + ' step: ' + str(iInd)
+            #       + ' finished' + ' cost time: ' + str((t2 - t1)))
+
         m_ind_par.append(v_onehot)
         c_root_par.append(v_root)
 
@@ -133,9 +138,9 @@ def my_ba_thread(inpdata):
 
     #   ==========   restore the result  =====================
     # thread_data_name_full = MY_PATH + FILE_HEADER + '_FULL_' + str(index)  # pickle it into the root
-    thread_data_name = MY_PATH + FILE_HEADER + '_' + NODE_NAME +  '_th_' + str(index)
-    with open(thread_data_name, 'wb') as File:
-        pickle.dump(instore, File)
+    # thread_data_name = MY_PATH + FILE_HEADER + '_' + NODE_NAME + '_th_' + str(index)
+    # with open(thread_data_name, 'wb') as File:
+    #    pickle.dump(instore, File)
 
     time_end = time.time()
     print('The thread ' + str(index) + ' takes '
@@ -149,13 +154,13 @@ def multicore(num0, num_thread, num_iteration, coupling, beta, mu):
     # ==========  SET UP the thread  ==============================
     listparameter = (num0, coupling, beta, mu, num_iteration)
     inpdata = [listparameter + (i2,) for i2 in range(num_thread)]
-
     # the running poll
-    pool = mp.Pool()
+    pool = mp.Pool(NUM_POOL)
     pool.map(my_ba_thread, inpdata)
 
+    pool.close()
+    pool.join()
     # return result ?  need return value
-
 
 # =============== MAIN PROGRAM =============================================
 if __name__ == '__main__':
@@ -171,12 +176,12 @@ if __name__ == '__main__':
     # mu = ((num0 * 0.5) * np.pi) ** 2                  # The chemical potential
 
     # =====  create the directory and file in cloud to store datas   ==========
-    to_make_dir = MY_PATH
-    if os.path.exists(to_make_dir):
-        print('The directory %s has already existed' % to_make_dir)
-    else:
-        print('Try to create the %s' % to_make_dir)
-        os.mkdir(to_make_dir)
+    # to_make_dir = MY_PATH
+    # if os.path.exists(to_make_dir):
+    #     print('The directory %s has already existed' % to_make_dir)
+    # else:
+    #     print('Try to create the %s' % to_make_dir)
+    #     os.mkdir(to_make_dir)
 
     st0 = time.time()
     multicore(num0=Num0,
@@ -193,22 +198,6 @@ if __name__ == '__main__':
     # =============  Deal with the data  in /data/=============================
 
     Num = Num0 + 1
-    v_Base0 = 1.0 / 2 * np.arange(-Num0, Num0 + 1.0, step=2)
-
-    m_distribution = np.zeros([Num_thread, Num])
-
-    for index in range(Num_thread):
-        myFileName = MY_PATH + FILE_HEADER + '_' + NODE_NAME + '_th_' + str(index)
-        with open(myFileName, 'rb') as file_read:
-            mylist = pickle.load(file_read)
-            myarray = np.array(mylist)
-        result_index = myarray[0]
-        result_index = np.mean(result_index, axis=0)
-        v_distribution = np.array(result_index)
-        m_distribution[index, :] = v_distribution
-
-    v_dist = np.mean(m_distribution, axis=0)
-
 
 # make up the training set.
 # ba_X presents the input
@@ -216,31 +205,29 @@ if __name__ == '__main__':
 
     print('job:' + JOB_NAME + ' node:' + NODE_NAME + ' Main program finished')
 
-    sttime_1 = time.time()
-    list_X = list()
-    list_y = list()
-    for index in range(Num_thread):
+    # sttime_1 = time.time()
+    # list_X = list()
+    # list_y = list()
+    # for index in range(Num_thread):
+    #
+    #    file_name = MY_PATH + FILE_HEADER + '_' + NODE_NAME + '_th_' + str(index)
+    #    with open(file_name, 'rb') as File:
+    #        mylist = pickle.load(File)
+    #    mylist_1 = mylist[0]
+    #    mylist_2 = mylist[1]
+    #    for iIteration in range(Num_iteration):
+    #        list_X.append(mylist_1[iIteration])
+    #        v_root = mylist_2[iIteration]
+    #        myenergy = np.sum(v_root ** 2)
+    #        list_y.append(myenergy)
 
-        file_name = MY_PATH + FILE_HEADER + '_' + NODE_NAME + '_th_' + str(index)
-        with open(file_name, 'rb') as File:
-            mylist = pickle.load(File)
-        mylist_1 = mylist[0]
-        mylist_2 = mylist[1]
-        for iIteration in range(Num_iteration):
-            list_X.append(mylist_1[iIteration])
-            v_root = mylist_2[iIteration]
-            myenergy = np.sum(v_root ** 2)
-            list_y.append(myenergy)
+    # ba_X = np.array(list_X)
+    # ba_y = np.array(list_y)
 
-    ba_X = np.array(list_X)
-    ba_y = np.array(list_y)
+    # file_name = (MY_PATH + FILE_HEADER + '_' + NODE_NAME + '_ba_Xy')
+    # with open(file_name, 'wb') as myfile:
+    #    mylist = [ba_X, ba_y]
+    #    pickle.dump(mylist, myfile)
 
-    file_name = (MY_PATH + FILE_HEADER + '_' + NODE_NAME + '_ba_Xy')
-    with open(file_name, 'wb') as myfile:
-        mylist = [ba_X, ba_y]
-        pickle.dump(mylist, myfile)
-
-    sttime_2 = time.time()
-    print('elaspe time for storing : ' + str(sttime_2 - sttime_1))
-
-
+    # sttime_2 = time.time()
+    # print('elaspe time for storing : ' + str(sttime_2 - sttime_1))
